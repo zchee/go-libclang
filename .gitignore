@@ -29,4 +29,5 @@ _testmain.go
 
 go-libclang
 go-libclang.so
+!cmd/*
 build
