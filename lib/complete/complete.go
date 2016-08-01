@@ -84,7 +84,7 @@ func complete(self, args *C.PyObject) *C.PyObject {
 	gostr := C.CString(buf.String())
 	defer C.free(unsafe.Pointer(gostr))
 
-	return C.PyUnicode_FromString(gostr)
+	return C.PyUnicode_DecodeUTF8(gostr, C.Py_ssize_t(buf.Len()), nil)
 }
 
 func main() {}
