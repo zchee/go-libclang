@@ -11,7 +11,7 @@ import (
 	"unsafe"
 
 	"github.com/davecgh/go-spew/spew"
-	clang "github.com/go-clang/v3.8/clang"
+	clang "github.com/go-clang/v3.7/clang"
 )
 
 /*
@@ -43,7 +43,7 @@ func complete(self, args *C.PyObject) *C.PyObject {
 	tu := index.ParseTranslationUnit(gofile, []string{"-x", "c++", "-std=c++0x", "-stdlib=libc++"}, nil, 15)
 	defer tu.Dispose()
 
-	complete := tu.CodeCompleteAt(string(gofile), uint32(line), uint32(col), nil, clang.DefaultCodeCompleteOptions())
+	complete := tu.CodeCompleteAt(string(gofile), uint16(line),uint16(col), nil, clang.DefaultCodeCompleteOptions())
 	defer complete.Dispose()
 
 	completeResults := complete.Results()
@@ -63,7 +63,7 @@ func complete(self, args *C.PyObject) *C.PyObject {
 			defer wg.Done()
 
 			var bu bytes.Buffer
-			for i := uint32(0); i < cs.NumChunks(); i++ {
+			for i := uint16(0); i < cs.NumChunks(); i++ {
 				switch cs.ChunkKind(i) {
 				case clang.CompletionChunk_ResultType:
 					continue

@@ -13,7 +13,7 @@ CC ?= $(shell which clang)
 CGO_CFLAGS ?=
 CGO_LDFLAGS ?= -L$(shell /opt/llvm/bin/llvm-config --libdir)
 
-all: build
+all: build/golibclang.so
 
 build/golibclang.so:
 	CC=${CC} CGO_CFLAGS=${CGO_CFLAGS} CGO_LDFLAGS=${CGO_LDFLAGS} ${GO_BUILD} ${GO_BUILD_FLAGS_SHARED} -o ${BUILD_DIR}/${LIBRARY_NAME}.so ${PACKAGE_PATH}
