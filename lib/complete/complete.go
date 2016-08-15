@@ -7,10 +7,8 @@ package main
 import (
 	"bytes"
 	"log"
-	"sync"
 	"unsafe"
 
-	"github.com/davecgh/go-spew/spew"
 	clang "github.com/go-clang/v3.7/clang"
 )
 
@@ -34,6 +32,8 @@ func complete(self, args *C.PyObject) *C.PyObject {
 	// filepy := C.PyUnicode_AsUTF8(&file)
 	// log.Printf("file: %+v\n", filepy)
 	log.Printf("file: %+v", C.GoString(&file))
+	log.Printf("line %+v", line)
+	log.Printf("col: %+v", &col)
 	// return C.PyUnicode_FromObject(&file)
 
 	index := clang.NewIndex(0, 0)
@@ -43,49 +43,24 @@ func complete(self, args *C.PyObject) *C.PyObject {
 	tu := index.ParseTranslationUnit(gofile, []string{"-x", "c++", "-std=c++0x", "-stdlib=libc++"}, nil, 15)
 	defer tu.Dispose()
 
-	complete := tu.CodeCompleteAt(string(gofile), uint16(line),uint16(col), nil, clang.DefaultCodeCompleteOptions())
+	complete := tu.CodeCompleteAt(string(gofile), uint16(line), uint16(col), nil, clang.DefaultCodeCompleteOptions())
 	defer complete.Dispose()
 
 	completeResults := complete.Results()
 
 	var buf bytes.Buffer
 
-	var (
-		ch = make(chan []byte, int(complete.NumResults()))
-		wg sync.WaitGroup
-	)
-
-	wg.Add(int(complete.NumResults()))
 	for _, r := range completeResults {
 		cs := r.CompletionString()
 
-		go func() {
-			defer wg.Done()
-
-			var bu bytes.Buffer
-			for i := uint16(0); i < cs.NumChunks(); i++ {
-				switch cs.ChunkKind(i) {
-				case clang.CompletionChunk_ResultType:
-					continue
-				}
-				bu.WriteString(cs.ChunkText(i))
+		for i := uint16(0); i < cs.NumChunks(); i++ {
+			switch cs.ChunkKind(i) {
+			case clang.CompletionChunk_ResultType:
+				continue
 			}
-
-			bu.Write([]byte("\n"))
-			ch <- bu.Bytes()
-		}()
-	}
-
-	wg.Wait()
-	log.Printf("\x1b[34;40mch\x1b[0m:\n%+v\n", spew.Sdump(ch))
-	var i int
-	for b := range ch {
-		buf.Write(b)
-		i++
-
-		if i > len(ch) {
-			break
+			buf.WriteString(cs.ChunkText(i))
 		}
+		buf.Write([]byte("\n"))
 	}
 
 	gostr := C.CString(buf.String())
