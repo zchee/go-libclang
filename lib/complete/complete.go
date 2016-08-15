@@ -18,25 +18,32 @@ import (
 #cgo pkg-config: python3
 #include <Python.h>
 
-static inline int PyArg_ParseTuple_LL(PyObject *args, long long *a, long long *b) {
-    return PyArg_ParseTuple(args, "LL", a, b);
+static inline int PyArg_ParseTuple_OLL(PyObject *args, char *file, long long *line, long long *col) {
+    return PyArg_ParseTuple(args, "sLL", file, line, col);
 }
 */
 import "C"
 
 //export complete
 func complete(self, args *C.PyObject) *C.PyObject {
-	var line, col C.longlong
-	C.PyArg_ParseTuple_LL(args, &line, &col)
+	var (
+		file      C.char
+		line, col C.longlong
+	)
+	C.PyArg_ParseTuple_OLL(args, &file, &line, &col)
+	// filepy := C.PyUnicode_AsUTF8(&file)
+	// log.Printf("file: %+v\n", filepy)
+	log.Printf("file: %+v", C.GoString(&file))
+	// return C.PyUnicode_FromObject(&file)
 
 	index := clang.NewIndex(0, 0)
 	defer index.Dispose()
 
-	file := "../testdata/boost-asio_server.cpp"
-	tu := index.ParseTranslationUnit(file, []string{"-x", "c++", "-std=c++0x", "-stdlib=libc++"}, nil, 15)
+	gofile := "../testdata/boost-asio_server.cpp"
+	tu := index.ParseTranslationUnit(gofile, []string{"-x", "c++", "-std=c++0x", "-stdlib=libc++"}, nil, 15)
 	defer tu.Dispose()
 
-	complete := tu.CodeCompleteAt(string(file), uint32(line), uint32(col), nil, clang.DefaultCodeCompleteOptions())
+	complete := tu.CodeCompleteAt(string(gofile), uint32(line), uint32(col), nil, clang.DefaultCodeCompleteOptions())
 	defer complete.Dispose()
 
 	completeResults := complete.Results()
