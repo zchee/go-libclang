@@ -11,7 +11,7 @@ PACKAGE_PATH := $(subst $(shell go env GOPATH)/src/,,${SRC})
 
 CC ?= $(shell which clang)
 CGO_CFLAGS ?=
-CGO_LDFLAGS ?= -L$(shell /opt/llvm/bin/llvm-config --libdir)
+CGO_LDFLAGS ?= -L$(shell llvm-config --libdir)
 
 all: build/golibclang.so
 
